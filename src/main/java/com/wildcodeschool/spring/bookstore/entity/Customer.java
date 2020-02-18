@@ -3,7 +3,9 @@ package com.wildcodeschool.spring.bookstore.entity;
 import static java.util.Collections.singletonList;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -11,11 +13,15 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import com.wildcodeschool.spring.bookstore.entity.carpool.Car;
+import com.wildcodeschool.spring.bookstore.entity.carpool.Transportation;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -47,6 +53,12 @@ public class Customer implements UserDetails {
 	
 	@OneToMany(mappedBy = "customer", cascade = CascadeType.REMOVE)
 	private List<Review> reviews;
+	
+	@OneToMany(mappedBy = "customer", cascade = CascadeType.REMOVE)
+	private Set<Transportation> transportations;
+	
+	@ManyToMany(mappedBy = "owners", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+	private Set<Car> cars = new HashSet<>();
 
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {

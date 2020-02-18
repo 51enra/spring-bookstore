@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.ModelMap;
 
+import com.wildcodeschool.spring.bookstore.entity.Book;
 import com.wildcodeschool.spring.bookstore.entity.carpool.Car;
 import com.wildcodeschool.spring.bookstore.repository.CarRepository;
 
@@ -41,12 +43,11 @@ class CarControllerTest {
 	@Test
 	void shouldReadAllCars() throws Exception {
 		// Given | Arrange
-
 		// When | Act
 		MvcResult result = mock.perform(MockMvcRequestBuilders.get("/cars")).andReturn();
 		// Then | Assert
-		List<Car> books = getCarsFromModel(result);
-		assertThat(books).hasSize(0);
+		List<Car> cars = getCarsFromModel(result);
+		assertThat(cars).hasSize(0);
 	}
 
 	@Test
@@ -90,17 +91,29 @@ class CarControllerTest {
 	@Test
 	void shouldBeAbleToModifyACar() throws Exception {
 		// Given | Arrange
+		Car existingCar = givenACarInTheDatabase("Renault Zoe");
+		Car carForUpload = new Car();
+		carForUpload.setModel("Tesla Model 3000");
+		carForUpload.setId(existingCar.getId());
 		// When
+		MvcResult result = mock.perform(MockMvcRequestBuilders.post("/car/upsert/")
+				.contentType(MediaType.APPLICATION_FORM_URLENCODED).flashAttr("car", carForUpload)).andReturn();
 		// Then
-		fail();
+		assertThat(result.getResponse().getStatus()).isEqualTo(302);
+		Optional<Car> results = carRepo.findById(existingCar.getId());
+		assertThat(results).isPresent();
+		assertThat(results.get().getModel()).isEqualTo("Tesla Model 3000");
 	}
 
 	@Test
 	void shouldBeAbleToDeleteACar() throws Exception {
 		// Given | Arrange
+		Car givenCar = givenACarInTheDatabase("Tesla Model 3");
 		// When
+		mock.perform(MockMvcRequestBuilders.get("/car/" + givenCar.getId() + "/delete")).andReturn();
 		// Then
-		fail();
+		Optional<Car> result = carRepo.findById(givenCar.getId());
+		assertThat(result).isEmpty();
 	}
 
 	private List<Car> getCarsFromModel(MvcResult result) {
@@ -109,6 +122,7 @@ class CarControllerTest {
 		List<Car> cars = (List<Car>) attributeMap.get("cars");
 		return cars;
 	}
+	
 
 	private Car givenACarInTheDatabase(String model) {
 		Car car = new Car();
